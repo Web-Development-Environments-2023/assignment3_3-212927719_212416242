@@ -3,6 +3,7 @@ import App from "./App.vue";
 import VueAxios from "vue-axios";
 import axios from "axios";
 
+import store from "./store";
 import routes from "./routes";
 import VueRouter from "vue-router";
 Vue.use(VueRouter);
@@ -78,6 +79,7 @@ const shared_data = {
     localStorage.removeItem("username");
     this.username = undefined;
   },
+  ...store
 };
 console.log(shared_data);
 // Vue.prototype.$root.store = shared_data;
