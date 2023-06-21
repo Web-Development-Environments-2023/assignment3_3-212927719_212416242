@@ -81,7 +81,6 @@ const shared_data = {
   },
   ...store
 };
-console.log(shared_data);
 // Vue.prototype.$root.store = shared_data;
 
 new Vue({
