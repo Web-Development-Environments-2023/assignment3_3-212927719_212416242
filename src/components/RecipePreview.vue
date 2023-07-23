@@ -1,7 +1,8 @@
 <template>
   <router-link
     :to="{ name: 'recipe', params: { recipeId: id } }"
-    class="recipe-preview" style="text-decoration: none;"
+    class="recipe-preview"
+    style="text-decoration: none;"
   >
     <div class="recipe">
       <div class="recipe_upper">
@@ -10,40 +11,47 @@
         <img v-if="recipe.vegan" class="vegan_sign" src="../assets/vegan.png" />
         <img v-if="recipe.vegetarian" class="vegan_sign" src="../assets/no-meat.png" />
         <img v-if="recipe.glutenFree" class="vegan_sign" src="../assets/gluten-free.png" />
+
+        <img
+          @click="addToFavorite"
+          v-if="!favorite"
+          class="favorite"
+          src="../assets/favorite-not-selected.png"
+        />
+        <img
+          @click="removeFromFavorite"
+          v-if="favorite"
+          class="favorite"
+          src="../assets/favorite-selected.png"
+        />
       </div>
       <div class="recipe__content">
         <header class="content__header">
-          <!-- <div class="row-wrapper">
-            <h2 class="recipe-title">Strawberry Waffle</h2>
-            <div class="user-rating"></div>
-          </div> -->
           <ul class="recipe-details">
             <li class="recipe-details-item">
-              <!-- <i class="ion ion-ios-clock-outline"></i> -->
               <span class="value">{{ recipe.time }}</span>
               <span class="title">Minutes</span>
             </li>
             <li class="recipe-details-item">
-              <!-- <i class="ion ion-ios-book-outline"></i> -->
               <span class="value">{{ recipe.ingredients.length }}</span
               ><span class="title">Ingredients</span>
             </li>
             <li class="recipe-details-item">
-              <!-- <i class="ion ion-ios-person-outline"></i> -->
               <span class="value">{{ recipe.numberOfPortions }}</span>
               <span class="title">Serving</span>
             </li>
             <li class="recipe-details-item">
-              <!-- <i class="ion ion-ios-person-outline"></i> -->
               <span class="value">{{ recipe.popularity }}</span>
               <span class="title">Likes</span>
             </li>
           </ul>
         </header>
-        <p class="description">
-          {{ recipe.summary.substring(0, 120) + "..." }}
-        </p>
+        <p
+          class="description"
+          v-html="recipe.summary.substring(0, 120) + '...'"
+        ></p>
         <footer class="content__footer"><a>View Recipe</a></footer>
+        <img v-if="watched" src="../assets/eye.png" class="watched-eye" />
       </div>
     </div>
   </router-link>
@@ -51,16 +59,73 @@
 
 <script>
 export default {
-  // mounted() {
-  //   // console.log(this.recipe)
-  //   this.axios.get(this.recipe.mainImage).then((i) => {
-  //     this.image_load = true;
-  //   });
-  // },
   data() {
     return {
       image_load: true,
+      watched: false,
+      favorite: false,
     };
+  },
+  methods: {
+    async addToFavorite(event) {
+      event.preventDefault();
+      if (!this.$root.store.username) {
+        this.$root.toast(
+          "Favorite",
+          "You need to login to add to favorites",
+          "warning"
+        );
+        this.$router.replace("/login");
+        return;
+      }
+
+      try {
+        const response = await this.axios.post(
+          this.$root.store.server_domain + "users/addFavorite",
+          {
+            recipeId: this.id,
+          }
+        );
+        if (response.status == 200) {
+          this.$root.toast(
+            "Favorite",
+            "Added to " + this.$root.store.username + " favorites",
+            "success"
+          );
+          this.favorite = true;
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    },
+    async removeFromFavorite(event) {
+      event.preventDefault();
+      if (!this.$root.store.username) {
+        this.$root.toast(
+          "Favorite",
+          "You need to login to add to favorites",
+          "warning"
+        );
+        this.$router.replace("/login");
+        return;
+      }
+      try {
+        const response = await this.axios.post(
+          this.$root.store.server_domain + "users/removeFavorite",
+          {
+            recipeId: this.id,
+          }
+        );
+        this.$root.toast(
+          "Favorite:",
+          "Removed to " + this.$root.store.username + " favorites",
+          "danger"
+        );
+        this.favorite=false;
+      } catch (e) {
+        console.log(e);
+      }
+    },
   },
   props: {
     recipe: {
@@ -71,25 +136,34 @@ export default {
       type: Number,
       required: true,
     },
-    // title: {
-    //   type: String,
-    //   required: true
-    // },
-    // readyInMinutes: {
-    //   type: Number,
-    //   required: true
-    // },
-    // image: {
-    //   type: String,
-    //   required: true
-    // },
-    // aggregateLikes: {
-    //   type: Number,
-    //   required: false,
-    //   default() {
-    //     return undefined;
-    //   }
-    // }
+  },
+  async created() {
+    if (this.$root.store.username) {
+      let response;
+      try {
+        response = await this.axios.get(
+          this.$root.store.server_domain + "users/isWatched",
+          {
+            params: { recipe_id: this.id },
+          }
+        );
+        console.log(response);
+        this.watched = response.data;
+      } catch (e) {
+        console.log(e);
+      }
+      try {
+        response = await this.axios.get(
+          this.$root.store.server_domain + "users/isFavorite",
+          {
+            params: { recipe_id: this.id },
+          }
+        );
+        this.favorite = response.data;
+      } catch (e) {
+        console.log(e);
+      }
+    }
   },
 };
 </script>
@@ -124,10 +198,11 @@ a {
   overflow: hidden;
   aspect-ratio: 2/2.5;
   border-radius: 8%;
+  margin-bottom: 5%;
 }
 .recipe_upper {
   position: relative;
-  height: 30%;
+  height: 35%;
   box-shadow: 0px 0px 130px 0 rgba(0, 0, 0, 0.38);
 }
 
@@ -205,7 +280,7 @@ a {
 .recipe .recipe__content .description {
   margin: 0.3em 0 1.8em;
 }
-.description{
+.description {
   font-size: 1 vw;
 }
 .recipe .recipe__content .content__footer {
@@ -239,4 +314,19 @@ a {
   margin-left: 2%;
 }
 
+.favorite {
+  width: 10%;
+  right: 0%;
+  position: absolute;
+  rotate: 180deg;
+  bottom: 0%;
+}
+
+.watched-eye {
+  position: absolute;
+  bottom: 6%;
+  right: 8%;
+  width: 9%;
+  opacity: 0.15;
+}
 </style>

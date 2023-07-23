@@ -1,32 +1,56 @@
 <template>
   <div class="container">
     <h1 class="title">Main Page</h1>
-    <RecipePreviewList title="Random Recipes" path="/recipes/random?amount=3" class="RandomRecipes center" />
-    <router-link v-if="!$root.store.username" to="/login" tag="button">You need to Login to vue this</router-link>
-    <RecipePreviewList v-if="false"
-      title="Last Viewed Recipes"
-      path="/users/lastWatchRecipes?limit=3"
-      :class="{
-        RandomRecipes: true,
-        blur: !$root.store.username,
-        center: true
-      }"
-      disabled
-    ></RecipePreviewList>
-    <!-- <div
-      style="position: absolute;top: 70%;left: 50%;transform: translate(-50%, -50%);"
-    >
-      Centeredasdasdad
-    </div>-->
+
+    <b-row>
+      <b-col>
+        <h1>Explore this recipes:</h1>
+        <RecipePreviewList
+          path="recipes/random?amount=3"
+          class="RandomRecipes center"
+          v-bind:cols="1"
+          v-bind:small="true"
+          ref="randomRecipes"
+        />
+        <b-button block pill variant="success" @click="updateRandomRecipes">
+          Refresh
+        </b-button>
+      </b-col>
+      <b-col>
+        <div v-if="$root.store.username">
+          <h1>Last watched recipes:</h1>
+          <RecipePreviewList
+            v-bind:cols="1"
+            path="users/lastWatchRecipes?limit=3"
+            v-bind:small="true"
+            :class="{
+              RandomRecipes: true,
+              blur: !$root.store.username,
+              center: true,
+            }"
+          ></RecipePreviewList>
+        </div>
+        <div v-if="!$root.store.username">
+          <LoginPage />
+        </div>
+      </b-col>
+    </b-row>
   </div>
 </template>
 
 <script>
 import RecipePreviewList from "../components/RecipePreviewList";
+import LoginPage from "../pages/LoginPage.vue";
 export default {
   components: {
-    RecipePreviewList
-  }
+    RecipePreviewList,
+    LoginPage,
+  },
+  methods: {
+    updateRandomRecipes() {
+      this.$refs.randomRecipes.updateRecipes();
+    },
+  },
 };
 </script>
 

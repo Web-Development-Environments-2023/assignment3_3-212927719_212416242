@@ -1,37 +1,43 @@
 <template>
   <div class="container">
     <h1 class="title">Search Page</h1>
-    <form method="dialog">
-    <label>
-      <input type="text" name="favAnimal" v-model="inpVal"> 
-      <button type="submit" @click="onSearch">search</button>
-    </label>
-    </form>
-    <RecipePreviewList v-if="showSearch" title="Random Recipes" :path="path" class="center"/>
+    <Search @search-func="onSearch" @updateOrderBy="updateOrderBy"/>
+    <div style="height: 5%;"></div>
+    <RecipePreviewList
+      :path="path"
+      style="margin-top: 5%;"
+      :orderBy="orderBy"
+    />
   </div>
 </template>
 
 <script>
 import RecipePreviewList from "../components/RecipePreviewList";
+import Search from "../components/Search.vue";
 export default {
   components: {
-    RecipePreviewList
+    RecipePreviewList,
+    Search
   },
   data() {
     return {
-      inpVal: '',
       path: '',
-      showSearch: false,
+      // showSearch: false,
+      orderBy: "Time"
     }
   },
   methods: {
-    onSearch() {
-      if(this.inpVal) {
-        this.path = `/recipes/search?query=${this.inpVal}&limit=3`
-        this.showSearch = true;
-      } else {
-        this.showSearch = false;
+    onSearch(searchValue,limit,cuisine,diet,intolerances) {
+      this.sortBy="testing";
+      if (searchValue) {
+        this.path = `recipes/search?query=${searchValue}&limit=${limit}&cuisine=${cuisine}&diet=${diet}&intolerances=${intolerances}`
+      //   this.showSearch = true;
+      // } else {
+      //   this.showSearch = false;
       }
+    },
+    updateOrderBy(newVal){
+      this.orderBy = newVal;
     }
   }
 }

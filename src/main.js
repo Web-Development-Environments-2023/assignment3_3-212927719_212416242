@@ -2,6 +2,7 @@ import Vue from "vue";
 import App from "./App.vue";
 import VueAxios from "vue-axios";
 import axios from "axios";
+// axios.defaults.withCredentials = true
 
 import store from "./store";
 import routes from "./routes";
@@ -10,7 +11,10 @@ Vue.use(VueRouter);
 const router = new VueRouter({
   routes,
 });
-
+import Fragment from 'vue-fragment'
+Vue.use(Fragment.Plugin)
+import { BSpinner } from 'bootstrap-vue'
+Vue.component('b-spinner', BSpinner)
 import Vuelidate from "vuelidate";
 import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap-vue/dist/bootstrap-vue.css";

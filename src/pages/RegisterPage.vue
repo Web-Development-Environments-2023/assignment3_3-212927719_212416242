@@ -24,7 +24,57 @@
           Username alpha
         </b-form-invalid-feedback>
       </b-form-group>
-
+      <b-form-group
+        id="input-group-firstName"
+        label-cols-sm="3"
+        label="First name:"
+        label-for="firstName"
+      >
+        <b-form-input
+          id="firstName"
+          v-model="$v.form.firstName.$model"
+          type="text"
+          :state="validateState('firstName')"
+        ></b-form-input>
+        <b-form-invalid-feedback v-if="!$v.form.firstName.required">
+          firstName is required
+        </b-form-invalid-feedback>
+      </b-form-group>
+      <b-form-group
+        id="input-group-lastName"
+        label-cols-sm="3"
+        label="Last name:"
+        label-for="lastName"
+      >
+        <b-form-input
+          id="lastName"
+          v-model="$v.form.lastName.$model"
+          type="text"
+          :state="validateState('lastName')"
+        ></b-form-input>
+        <b-form-invalid-feedback v-if="!$v.form.lastName.required">
+          lastName is required
+        </b-form-invalid-feedback>
+      </b-form-group>
+      <b-form-group
+        id="input-group-email"
+        label-cols-sm="3"
+        label="Email:"
+        label-for="email"
+      >
+        <b-form-input
+          id="email"
+          v-model="$v.form.email.$model"
+          type="text"
+          :state="validateState('email')"
+        ></b-form-input>
+        <b-form-invalid-feedback v-if="!$v.form.email.required">
+          email is required
+        </b-form-invalid-feedback>
+        <b-form-invalid-feedback v-if="!$v.form.email.email">
+          This is not a email
+        </b-form-invalid-feedback>
+      </b-form-group>
       <b-form-group
         id="input-group-country"
         label-cols-sm="3"
@@ -56,6 +106,12 @@
         ></b-form-input>
         <b-form-invalid-feedback v-if="!$v.form.password.required">
           Password is required
+        </b-form-invalid-feedback>
+        <b-form-invalid-feedback v-if="!$v.form.password.containsNumber">
+          Password need to contain a number
+        </b-form-invalid-feedback>
+        <b-form-invalid-feedback v-if="!$v.form.password.containsSpecialChar">
+          Password need to contain a special char
         </b-form-invalid-feedback>
         <b-form-text v-else-if="$v.form.password.$error" text-variant="info">
           Your password should be <strong>strong</strong>. <br />
@@ -127,7 +183,7 @@ import {
   maxLength,
   alpha,
   sameAs,
-  email
+  email,
 } from "vuelidate/lib/validators";
 
 export default {
@@ -142,11 +198,11 @@ export default {
         password: "",
         confirmedPassword: "",
         email: "",
-        submitError: undefined
+        submitError: undefined,
       },
       countries: [{ value: null, text: "", disabled: true }],
       errors: [],
-      validated: false
+      validated: false,
     };
   },
   validations: {
@@ -154,20 +210,38 @@ export default {
       username: {
         required,
         length: (u) => minLength(3)(u) && maxLength(8)(u),
-        alpha
+        alpha,
       },
       country: {
-        required
+        required,
       },
       password: {
         required,
-        length: (p) => minLength(5)(p) && maxLength(10)(p)
+        length: (p) => minLength(5)(p) && maxLength(10)(p),
+        containsNumber: function(value) {
+          const regex = /\d/;
+          return regex.test(value);
+        },
+        containsSpecialChar: function(value) {
+          const regex = /[ !@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
+          return regex.test(value);
+        }
       },
       confirmedPassword: {
         required,
-        sameAsPassword: sameAs("password")
-      }
-    }
+        sameAsPassword: sameAs("password"),
+      },
+      firstName: {
+        required,
+      },
+      lastName: {
+        required,
+      },
+      email: {
+        required,
+        email,
+      },
+    },
   },
   mounted() {
     // console.log("mounted");
@@ -182,18 +256,28 @@ export default {
     async Register() {
       try {
         const response = await this.axios.post(
-          this.$root.store.server_domain + "/Register",
-
+          this.$root.store.server_domain + "Register",
           {
             username: this.form.username,
-            password: this.form.password
+            firstName: this.form.firstName,
+            lastName: this.form.lastName,
+            country: this.form.country,
+            password: this.form.password,
+            confirmPassword: this.form.confirmedPassword,
+            email: this.form.email,
+            profilePic: "",
           }
         );
         this.$router.push("/login");
+
         // console.log(response);
       } catch (err) {
-        console.log(err.response);
-        this.form.submitError = err.response.data.message;
+        if (err.response.status == 409) {
+          this.$root.toast("Register:", "Username allready taken", "danger");
+        } else {
+          console.log(err.response);
+          this.form.submitError = err.response.data.message;
+        }
       }
     },
     onRegister() {
@@ -213,13 +297,13 @@ export default {
         country: null,
         password: "",
         confirmedPassword: "",
-        email: ""
+        email: "",
       };
       this.$nextTick(() => {
         this.$v.$reset();
       });
-    }
-  }
+    },
+  },
 };
 </script>
 <style lang="scss" scoped>
